@@ -3,61 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Productivity Methodology Engine</title>
-  <link rel="stylesheet" href="css/main.css">
-  <link rel="manifest" href="manifest.json">
+  <meta name="description" content="Stratum - The Intent-to-Outcome Productivity Engine with 5-Layer Strict Separation of Concerns, dynamic 2x2 matrix, and automated priority ranking.">
+  <title>Stratum | Intent-to-Outcome Engine</title>
+
+  <!-- Root-Relative Asset Links -->
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
 <body>
   <div id="app-container">
+    <!-- Top Global Header -->
     <header class="app-header">
       <div class="brand">
-        <h1>Productivity Engine</h1>
+        <h1>Stratum</h1>
         <span class="badge">v1.0.0 (Strict SoC)</span>
       </div>
-      <nav class="nav-tabs">
-        <button class="tab-btn active" data-view="matrix">2x2 Matrix</button>
-        <button class="tab-btn" data-view="hierarchy">5-Layer Hierarchy</button>
-        <button class="tab-btn" data-view="ingest">Quick Ingest (L5)</button>
-        <button class="tab-btn" data-view="epistemic">Epistemic Governance (L1)</button>
-        <button class="tab-btn" data-view="qa">Automated QA Audit</button>
+      <nav class="nav-tabs" aria-label="Main Navigation">
+        <button class="tab-btn active" data-view="matrix" aria-selected="true">2x2 Matrix</button>
+        <button class="tab-btn" data-view="hierarchy" aria-selected="false">5-Layer Hierarchy</button>
+        <button class="tab-btn" data-view="ingest" aria-selected="false">Quick Ingest (L5)</button>
+        <button class="tab-btn" data-view="epistemic" aria-selected="false">Epistemic Governance (L1)</button>
+        <button class="tab-btn" data-view="qa" aria-selected="false">Automated QA Audit</button>
       </nav>
     </header>
 
-    <main id="main-view" class="view-content">
-      <!-- Dynamic View Injected Here -->
+    <!-- Dynamic Router Outlet -->
+    <main id="main-view" class="view-content" role="main">
+      <!-- Injected dynamically by /js/app.js -->
+      <div class="panel">
+        <p style="color: var(--text-muted);">Initializing Stratum Local Storage Engine...</p>
+      </div>
     </main>
 
-    <!-- Modal for Proof-of-Outcome -->
-    <div id="proof-modal" class="modal hidden">
+    <!-- Modal for Sprint 5 Proof-of-Outcome Gatekeeper -->
+    <div id="proof-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-card">
-        <h3>Submit Proof-of-Outcome (Verification Gate)</h3>
-        <p>This high-impact task requires empirical evidence before closure.</p>
+        <h3 id="modal-title">Submit Proof-of-Outcome (Verification Gate)</h3>
+        <p style="margin: 0.5rem 0 1rem 0; font-size: 0.85rem; color: var(--text-muted);">
+          High-impact tasks (Impact &ge; 7.0) cannot be closed without empirical evidence confirming the outcome.
+        </p>
+
         <form id="proof-form">
           <input type="hidden" id="proof-task-id">
-          <label>Proof Type:
+
+          <label for="proof-type">Proof Type:
             <select id="proof-type" required>
-              <option value="TELEMETRY_LOG">Telemetry Log (Data)</option>
-              <option value="AUTOMATED_TEST">Automated Test Run</option>
-              <option value="SIGN_OFF">Compliance Sign-off</option>
-              <option value="METRIC_THRESHOLD">Metric Threshold Pass</option>
+              <option value="TELEMETRY_LOG">Telemetry Log / Data File</option>
+              <option value="AUTOMATED_TEST">Automated Test Verification</option>
+              <option value="SIGN_OFF">Compliance / Lead Sign-off</option>
+              <option value="METRIC_THRESHOLD">Target Metric Threshold Pass</option>
             </select>
           </label>
-          <label>Verification Specification:
-            <textarea id="proof-spec" required placeholder="Describe how the outcome was physically/logically confirmed..."></textarea>
+
+          <label for="proof-spec">Verification Specification:
+            <textarea id="proof-spec" required rows="3" placeholder="Describe how the real-world state change was confirmed..."></textarea>
           </label>
-          <label>Evidence URI / URL / Hash:
-            <input type="text" id="proof-uri" required placeholder="https://... or sha256:...">
+
+          <label for="proof-uri">Evidence URI / File Hash:
+            <input type="text" id="proof-uri" required placeholder="https://... or sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069">
           </label>
+
           <div class="modal-actions">
-            <button type="button" id="modal-cancel-btn">Cancel</button>
-            <button type="submit" class="btn-primary">Verify & Close Task</button>
+            <button type="button" id="modal-cancel-btn" class="tab-btn">Cancel</button>
+            <button type="submit" class="btn-primary">Verify &amp; Close Task</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <script type="module" src="js/app.js"></script>
+  <!-- Service Worker Registration for Offline PWA Support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ ServiceWorker registered with scope:', reg.scope))
+          .catch(err => console.warn('⚠️ ServiceWorker registration failed:', err));
+      });
+    }
+  </script>
+
+  <!-- Main ES6 Modular Bootstrap -->
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>
