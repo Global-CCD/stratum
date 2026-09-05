@@ -1,32 +1,57 @@
-// public/js/dedupEngine.js - Real-Time Duplicate Task Collision Engine
+// public/js/dedupEngine.js - Positional Bi-Gram Hashing (Anti-Anagram)
 import { VectorMath } from './vectorMath.js';
 
 export class DedupEngine {
   /**
-   * Generates a deterministic character-frequency feature vector (32-dimensions)
+   * Generates a 64-dimensional Positional Bi-Gram Feature Vector
+   * Captures word sequences to eliminate anagram false positives.
    */
-  static generateFastVector(text) {
-    const vec = new Array(32).fill(0);
-    const clean = text.toLowerCase().replace(/[^a-z0-9]/g, '');
-    for (let i = 0; i < clean.length; i++) {
-      const idx = clean.charCodeAt(i) % 32;
-      vec[idx] += 1;
+  static generatePositionalVector(text, dimensions = 64) {
+    const vec = new Array(dimensions).fill(0.0);
+    if (!text || typeof text !== 'string') return vec;
+
+    const words = text.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    if (words.length === 0) return vec;
+
+    // Single-word fallback
+    if (words.length === 1) {
+      const hash = this._hashString(words[0]);
+      vec[Math.abs(hash) % dimensions] = 1.0;
+      return vec;
     }
-    // Normalize vector
-    const mag = Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0)) || 1;
-    return vec.map(v => v / mag);
+
+    // Bi-gram sequential hashing
+    for (let i = 0; i < words.length - 1; i++) {
+      const biGram = `${words[i]}_${words[i + 1]}`;
+      const hash = this._hashString(biGram);
+      const index = Math.abs(hash) % dimensions;
+      vec[index] += 1.0;
+    }
+
+    // Unit normalize vector
+    const norm = Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
+    if (norm < VectorMath.EPSILON) return vec;
+    return vec.map(v => v / norm);
   }
 
-  /**
-   * Checks incoming draft task against all existing active tasks
-   */
-  static findCollision(draftTitle, existingTasks, threshold = 0.85) {
-    if (!draftTitle || draftTitle.trim().length < 5) return null;
-    const draftVec = this.generateFastVector(draftTitle);
+  static _hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
+  }
+
+  static findCollision(draftTitle, existingTasks = [], threshold = 0.80) {
+    if (!draftTitle || draftTitle.trim().length < 4) return null;
+    const draftVec = this.generatePositionalVector(draftTitle);
 
     for (const task of existingTasks) {
-      const taskVec = this.generateFastVector(task.title);
+      if (!task.title) continue;
+      const taskVec = this.generatePositionalVector(task.title);
       const similarity = VectorMath.cosineSimilarity(draftVec, taskVec);
+
       if (similarity >= threshold) {
         return {
           collision: true,

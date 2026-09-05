@@ -1,5 +1,4 @@
 :root {
-  /* Default Dark Mode Theme */
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
   --bg-card: #334155;
@@ -35,8 +34,8 @@
   --dag-critical: #e11d48;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; transition: background-color 0.2s ease, color 0.2s ease; }
-body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; padding: 1.5rem; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; padding: 1.5rem; padding-bottom: 4rem; }
 #app-container { max-width: 1350px; margin: 0 auto; }
 
 .app-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem; }
@@ -63,9 +62,8 @@ body { background: var(--bg-primary); color: var(--text-primary); min-height: 10
 .task-meta { display: flex; gap: 0.5rem; font-size: 0.75rem; color: var(--text-muted); margin: 0.4rem 0; align-items: center; }
 .rank-badge { background: var(--bg-primary); padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: bold; color: var(--accent); }
 .blocked-badge { background: var(--q4); color: white; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-.critical-badge { background: var(--dag-critical); color: white; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
 
-/* Panels, Forms & SVG DAG */
+/* Panels & DAG */
 .panel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
 label { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600; }
 input, select, textarea { background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); padding: 0.6rem; border-radius: 4px; font-size: 0.9rem; }
@@ -75,6 +73,11 @@ button { cursor: pointer; }
 
 .dag-container { width: 100%; height: 450px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; position: relative; }
 svg.dag-svg { width: 100%; height: 100%; }
+
+/* Persistent Status HUD */
+.status-hud { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 0.5rem 1.5rem; display: flex; justify-content: space-between; font-size: 0.75rem; font-family: monospace; color: var(--text-muted); z-index: 90; }
+.hud-item { display: flex; align-items: center; gap: 0.4rem; }
+.hud-green { color: var(--q1); font-weight: bold; }
 
 /* Modals */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; }
