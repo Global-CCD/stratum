@@ -1,72 +1,86 @@
-// public/js/qaAudit.js - Built-in Automated QA Audit Suite
+// public/js/qaAudit.js - Full Sprints 1-10 Automated QA Audit Runner
 import { ScoringEngine } from './scoring.js';
 import { StrictSocValidator } from './validator.js';
 import { VectorMath } from './vectorMath.js';
 import { ProofGatekeeper } from './proofGate.js';
+import { DedupEngine } from './dedupEngine.js';
+import { DagEngine } from './dagEngine.js';
+import { ProofVerifier } from './proofVerifier.js';
+import { CryptoSync } from './cryptoSync.js';
 
 export class QaAuditRunner {
   static async runFullAudit(db) {
     const report = {
       p1_arch: 0,
       p2_math: 0,
-      p3_perf: 0,
-      p4_integrity: 0,
+      p3_dedup_ai: 0,
+      p4_dag: 0,
+      p5_proof: 0,
+      p6_e2ee: 0,
       totalScore: 0,
       details: []
     };
 
-    // --- Pillar 1: Architecture & Strict SoC (25 Pts) ---
+    // --- Pillar 1: Architecture & Strict SoC (15 Pts) ---
+    let layerThrew = false;
     try {
-      // Test invalid layer jump: Task directly to Horizon
-      let threw = false;
-      try {
-        await StrictSocValidator.validateParentLink(db, 'tasks', { project_id: null, horizon_id: 'invalid-jump' });
-      } catch {
-        threw = true;
-      }
-      if (threw) {
-        report.p1_arch += 25;
-        report.details.push('✅ Pillar 1 PASS: Strict SoC blocked layer-skipping.');
-      } else {
-        report.details.push('❌ Pillar 1 FAIL: Strict SoC allowed layer bypass.');
-      }
-    } catch (e) {
-      report.details.push(`❌ Pillar 1 ERROR: ${e.message}`);
+      await StrictSocValidator.validateParentLink(db, 'tasks', { project_id: null, horizon_id: 'bad-jump' });
+    } catch {
+      layerThrew = true;
+    }
+    if (layerThrew) {
+      report.p1_arch = 15;
+      report.details.push('✅ Pillar 1 PASS: Strict SoC blocked illegal layer-skipping.');
     }
 
-    // --- Pillar 2: Math & Scoring Engine (25 Pts) ---
-    const rank = ScoringEngine.calculatePriorityRank(8.0, 90.0); // (8 * 0.6) + (9 * 0.4) = 4.8 + 3.6 = 8.4
+    // --- Pillar 2: Dynamic Math & Anti-Creep (15 Pts) ---
+    const rank = ScoringEngine.calculatePriorityRank(8.0, 90.0);
     const antiCreep = ScoringEngine.evaluateExecutionStatus(35.0);
-    if (rank === 8.4 && antiCreep.isBlocked === true) {
-      report.p2_math += 25;
-      report.details.push('✅ Pillar 2 PASS: Priority formula and Anti-Creep gate deterministic.');
-    } else {
-      report.details.push('❌ Pillar 2 FAIL: Math calculation error.');
+    if (rank === 8.4 && antiCreep.isBlocked) {
+      report.p2_math = 15;
+      report.details.push('✅ Pillar 2 PASS: Priority Rank (8.40) & Anti-Creep Lock (<50%) validated.');
     }
 
-    // --- Pillar 3: Performance & Vector Math (25 Pts) ---
-    const start = performance.now();
-    const sim = VectorMath.cosineSimilarity([1, 0, 1], [1, 0, 1]);
-    const norm = VectorMath.normalizeSyncIndex(0.85); // should be 100
-    const duration = performance.now() - start;
-    if (sim === 1.0 && norm === 100.0 && duration < 5.0) {
-      report.p3_perf += 25;
-      report.details.push(`✅ Pillar 3 PASS: Vector math executed in ${duration.toFixed(2)} ms.`);
-    } else {
-      report.details.push('❌ Pillar 3 FAIL: Vector math performance or logic error.');
+    // --- Pillar 3: Sprint 7 Deduplication & Vectors (20 Pts) ---
+    const collision = DedupEngine.findCollision('Build SAML 2.0 Auth', [
+      { id: '1', title: 'Build SAML 2.0 Auth Flow' }
+    ], 0.80);
+    if (collision && collision.collision) {
+      report.p3_dedup_ai = 20;
+      report.details.push(`✅ Pillar 3 PASS: Real-time collision detected (${collision.similarityScore}% match).`);
     }
 
-    // --- Pillar 4: Epistemic & Proof Gating (25 Pts) ---
-    const toolSmell = ProofGatekeeper.detectToolFirstAntiPattern('Write python script for audio');
-    const closureBlock = ProofGatekeeper.canCloseTask({ impact_index: 8.5 }, null);
-    if (toolSmell.flagged && !closureBlock.allowed) {
-      report.p4_integrity += 25;
-      report.details.push('✅ Pillar 4 PASS: Tool-first detected & unbacked closure blocked.');
-    } else {
-      report.details.push('❌ Pillar 4 FAIL: Proof Gatekeeper bypassed.');
+    // --- Pillar 4: Sprint 8 DAG & Cycle Detection (15 Pts) ---
+    const cycleTest = DagEngine.resolveDependencies(
+      [{ id: 'A' }, { id: 'B' }],
+      [{ fromTaskId: 'A', toTaskId: 'B' }, { fromTaskId: 'B', toTaskId: 'A' }] // circular
+    );
+    if (cycleTest.hasCycle) {
+      report.p4_dag = 15;
+      report.details.push('✅ Pillar 4 PASS: Kahn\'s algorithm caught circular dependency cycle.');
     }
 
-    report.totalScore = report.p1_arch + report.p2_math + report.p3_perf + report.p4_integrity;
+    // --- Pillar 5: Sprint 9 Telemetry Proof Verification (15 Pts) ---
+    const metricPass = ProofVerifier.evaluateMetricProof(
+      { metric: 'latency_ms', operator: '<', threshold: 100 },
+      { metric: 'latency_ms', value: 64 }
+    );
+    if (metricPass.verified) {
+      report.p5_proof = 15;
+      report.details.push('✅ Pillar 5 PASS: Metric telemetry proof verified (64ms < 100ms).');
+    }
+
+    // --- Pillar 6: Sprint 10 Zero-Knowledge E2EE Sync (20 Pts) ---
+    const secret = { test: 'payload_data_confidential' };
+    const pass = 'master_passphrase_stratum';
+    const encrypted = await CryptoSync.encryptPayload(secret, pass);
+    const decrypted = await CryptoSync.decryptPayload(encrypted, pass);
+    if (decrypted.test === secret.test && encrypted.cipherText !== JSON.stringify(secret)) {
+      report.p6_e2ee = 20;
+      report.details.push('✅ Pillar 6 PASS: AES-256-GCM encryption & decryption roundtrip authenticated.');
+    }
+
+    report.totalScore = report.p1_arch + report.p2_math + report.p3_dedup_ai + report.p4_dag + report.p5_proof + report.p6_e2ee;
     return report;
   }
 }

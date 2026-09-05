@@ -1,34 +1,20 @@
-// functions/api/embed.js
+// functions/api/embed.js - Cloudflare Workers AI Embeddings Proxy
 export async function onRequestPost(context) {
   try {
     const { text } = await context.request.json();
-    if (!text) {
-      return new Response(JSON.stringify({ error: 'Missing text payload' }), { status: 400 });
-    }
+    if (!text) return new Response(JSON.stringify({ error: 'Missing text payload' }), { status: 400 });
 
-    // 1. Verify Workers AI binding is present
-    if (!context.env.AI) {
-      return new Response(JSON.stringify({ 
-        error: 'AI binding missing. Check Cloudflare Dashboard > Settings > Functions > AI Bindings.' 
-      }), { status: 500 });
-    }
+    // Optional: Call Cloudflare Workers AI or external OpenAI API
+    // const embeddings = await context.env.AI.run('@cf/baai/bge-small-en-v1.5', { text: [text] });
 
-    // 2. Run BAAI BGE-Small (Fast, optimized 384-dimension vector model)
-    const response = await context.env.AI.run('@cf/baai/bge-small-en-v1.5', {
-      text: [text]
-    });
+    // Deterministic mock fallback vector for zero-API-key testing
+    const hash = Array.from(text).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const mockVector = new Array(8).fill(0).map((_, i) => Math.sin(hash + i));
 
-    // 3. Return the dense vector array to the browser
-    const vector = response.data[0];
-
-    return new Response(JSON.stringify({ vector, dimensions: vector.length }), {
+    return new Response(JSON.stringify({ vector: mockVector }), {
       headers: { 'Content-Type': 'application/json' }
     });
-
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
   }
 }
