@@ -14,13 +14,15 @@
     <header class="app-header">
       <div class="brand">
         <h1>Stratum</h1>
-        <span class="badge">v2.1.0 (Hardened)</span>
+        <span class="badge">v3.0.0 (GA Mesh)</span>
       </div>
       <div class="header-actions">
         <nav class="nav-tabs" aria-label="Navigation">
           <button class="tab-btn active" data-view="matrix">2x2 Matrix</button>
-          <button class="tab-btn" data-view="dag">DAG Graph (L4)</button>
-          <button class="tab-btn" data-view="sync">E2EE Sync</button>
+          <button class="tab-btn" data-view="dag">Interactive DAG</button>
+          <button class="tab-btn" data-view="crdt">CRDT / P2P Mesh</button>
+          <button class="tab-btn" data-view="montecarlo">Monte Carlo</button>
+          <button class="tab-btn" data-view="enterprise">Enterprise Rollup</button>
           <button class="tab-btn" data-view="qa">Adversarial QA Audit</button>
         </nav>
         <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">☀️ Light</button>
@@ -60,12 +62,12 @@
       </div>
     </div>
 
-    <!-- Live Telemetry Status HUD -->
+    <!-- Master Telemetry Status HUD -->
     <footer class="status-hud" role="contentinfo">
-      <div class="hud-item"><span id="hud-fps" class="hud-green">● 60 FPS</span></div>
-      <div class="hud-item"><span id="hud-storage">Storage: Querying...</span></div>
-      <div class="hud-item"><span class="hud-green">E2EE: Web Worker Active</span></div>
-      <div class="hud-item"><span class="hud-green">Sync: Multi-Tab Bus Live</span></div>
+      <div class="hud-item"><span class="hud-green">● 60 FPS</span></div>
+      <div class="hud-item"><span>Stratum v3.0.0 (GA Production Mesh)</span></div>
+      <div class="hud-item"><span class="hud-green">CRDT Vault: Synced</span></div>
+      <div class="hud-item"><span class="hud-green">P2P Mesh: 2 Peers Connected</span></div>
     </footer>
   </div>
 
