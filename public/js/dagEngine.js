@@ -1,12 +1,11 @@
-// public/js/dagEngine.js - Topological Sorting, Cycle Detection & Critical Path
+// public/js/dagEngine.js - Topological Sorting, Cycle Blocker & Urgency Burn
 import { ScoringEngine } from './scoring.js';
 
 export class DagEngine {
   /**
    * Kahn's Algorithm for Topological Sort & Cycle Detection
    */
-  static resolveDependencies(tasks, dependencies) {
-    // dependencies: [{ fromTaskId: '1', toTaskId: '2' }] -> 1 must complete before 2
+  static resolveDependencies(tasks = [], dependencies = []) {
     const inDegree = new Map();
     const adjList = new Map();
 
@@ -38,65 +37,76 @@ export class DagEngine {
       });
     }
 
-    const hasCycle = ordered.length !== tasks.length;
-    return { orderedTaskIds: ordered, hasCycle };
+    return { orderedTaskIds: ordered, hasCycle: ordered.length !== tasks.length };
   }
 
   /**
-   * Time-Decay Dynamic Priority Calculation
-   * Formula: (Impact * 0.5) + ((Sync / 10) * 0.3) + (Urgency * 0.2)
+   * Computes Urgency Burn countdown based on target deadline
    */
-  static calculateDynamicTimeDecay(impact, sync, targetDate, totalDaysAllocated = 30) {
+  static calculateUrgencyBurn(targetDateStr, totalDaysAllocated = 14) {
+    if (!targetDateStr) {
+      return { daysRemaining: 14, urgencyScore: 1.0, isBurning: false };
+    }
+
     const now = new Date();
-    const target = new Date(targetDate);
-    const diffDays = Math.max(0, (target - now) / (1000 * 60 * 60 * 24));
+    const target = new Date(targetDateStr);
     
-    // Urgency increases as days remaining decrease
-    const urgency = Math.min(10.0, Math.max(0.0, 10.0 - (diffDays / totalDaysAllocated) * 10.0));
-    const baseRank = (parseFloat(impact) * 0.5) + ((parseFloat(sync) / 10.0) * 0.3);
-    const dynamicRank = baseRank + (urgency * 0.2);
+    if (isNaN(target.getTime())) {
+      return { daysRemaining: 14, urgencyScore: 1.0, isBurning: false };
+    }
+
+    const diffMs = target - now;
+    const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    const urgencyScore = Math.min(10.0, Math.max(1.0, 10.0 - (daysRemaining / totalDaysAllocated) * 10.0));
 
     return {
-      dynamicRank: Math.round(dynamicRank * 100) / 100,
-      urgencyScore: Math.round(urgency * 10) / 10,
-      isCritical: urgency >= 8.0
+      daysRemaining,
+      urgencyScore: Math.round(urgencyScore * 10) / 10,
+      isBurning: daysRemaining <= 3
     };
   }
 
   /**
    * Renders interactive SVG representation of the Task DAG
    */
-  static renderSvgDag(tasks, dependencies) {
-    if (tasks.length === 0) return '<p style="padding:1rem; color:var(--text-muted);">No tasks in DAG.</p>';
+  static renderSvgDag(tasks = [], dependencies = []) {
+    if (!tasks || tasks.length === 0) {
+      return '<p style="padding:1rem; color:var(--text-muted);">No active tasks in DAG.</p>';
+    }
 
-    let svgHtml = `<svg class="dag-svg" viewBox="0 0 800 350" xmlns="http://www.w3.org/2000/svg">`;
+    let svgHtml = `<svg class="dag-svg" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--dag-edge)"/>
+        </marker>
+      </defs>`;
+
     const nodePositions = new Map();
-
-    // Compute simple linear layout for SVG visualization
     tasks.forEach((t, i) => {
-      const x = 80 + (i % 4) * 180;
-      const y = 80 + Math.floor(i / 4) * 120;
+      const x = 60 + (i % 4) * 210;
+      const y = 60 + Math.floor(i / 4) * 130;
       nodePositions.set(t.id, { x, y });
     });
 
-    // Draw dependency connecting lines
+    // Draw dependency lines
     dependencies.forEach(dep => {
       const from = nodePositions.get(dep.fromTaskId);
       const to = nodePositions.get(dep.toTaskId);
       if (from && to) {
-        svgHtml += `<line x1="${from.x + 60}" y1="${from.y + 20}" x2="${to.x}" y2="${to.y + 20}" stroke="var(--dag-edge)" stroke-width="2" marker-end="url(#arrow)" />`;
+        svgHtml += `<line x1="${from.x + 160}" y1="${from.y + 25}" x2="${to.x}" y2="${to.y + 25}" stroke="var(--dag-edge)" stroke-width="2" marker-end="url(#arrow)" />`;
       }
     });
 
     // Draw task nodes
     tasks.forEach(t => {
       const pos = nodePositions.get(t.id);
-      const isCritical = parseFloat(t.impact_index) >= 8.0;
+      const isCritical = Number(t.impact_index) >= 8.0;
+      const rank = ScoringEngine.calculatePriorityRank(t.impact_index, t.sync_index);
       svgHtml += `
-        <g transform="translate(${pos.x}, ${pos.y})">
-          <rect width="140" height="45" rx="6" fill="var(--dag-node)" stroke="${isCritical ? 'var(--dag-critical)' : 'var(--border)'}" stroke-width="${isCritical ? '2' : '1'}"/>
-          <text x="10" y="20" font-size="11" font-weight="bold" fill="var(--text-primary)">${t.title.substring(0, 18)}...</text>
-          <text x="10" y="35" font-size="9" fill="var(--accent)">Rank: ${ScoringEngine.calculatePriorityRank(t.impact_index, t.sync_index)}</text>
+        <g class="dag-node" transform="translate(${pos.x}, ${pos.y})" data-task-id="${t.id}" style="cursor:pointer;">
+          <rect width="160" height="50" rx="6" fill="var(--dag-node)" stroke="${isCritical ? 'var(--dag-critical)' : 'var(--border)'}" stroke-width="${isCritical ? '2' : '1'}"/>
+          <text x="10" y="22" font-size="11" font-weight="bold" fill="var(--text-primary)">${(t.title || '').substring(0, 20)}...</text>
+          <text x="10" y="38" font-size="9" fill="var(--accent)">Priority Rank: ${rank}</text>
         </g>
       `;
     });
